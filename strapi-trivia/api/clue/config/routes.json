@@ -1,0 +1,57 @@
+{
+  "routes": {
+    "GET /clue": {
+      "controller": "Clue",
+      "action": "find",
+      "policies": [
+        "isAuthorized"
+      ]
+    },
+    "GET /clue/:id": {
+      "controller": "Clue",
+      "action": "findOne",
+      "policies": [
+        "isAuthorized"
+      ]
+    },
+    "POST /clue": {
+      "controller": "Clue",
+      "action": "create",
+      "policies": [
+        "isAuthorized",
+        "addDataCreate"
+      ]
+    },
+    "PUT /clue/:id": {
+      "controller": "Clue",
+      "action": "update",
+      "policies": [
+        "isAuthorized",
+        "addDataUpdate"
+      ]
+    },
+    "DELETE /clue/:id": {
+      "controller": "Clue",
+      "action": "destroy",
+      "policies": [
+        "isAuthorized"
+      ]
+    },
+    "POST /clue/:parentId/:relation": {
+      "controller": "Clue",
+      "action": "add",
+      "policies": [
+        "isAuthorized",
+        "addDataCreate"
+      ]
+    },
+    "DELETE /clue/:parentId/:relation/:id": {
+      "controller": "Clue",
+      "action": "remove",
+      "policies": [
+        "isAuthorized",
+        "addDataUpdate"
+      ]
+    }
+  }
+}

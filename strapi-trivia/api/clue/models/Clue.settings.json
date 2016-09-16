@@ -1,0 +1,45 @@
+{
+  "identity": "clue",
+  "connection": "mymongo",
+  "displayedAttribute": "clue",
+  "schema": true,
+  "attributes": {
+    "id": {
+      "type": "integer",
+      "unique": true,
+      "primaryKey": true
+    },
+    "question": {
+      "type": "string",
+      "required": "true"
+    },
+    "answer": {
+      "type": "string",
+      "required": "true"
+    },
+    "airdate": {
+      "type": "datetime"
+    },
+    "value": {
+      "type": "integer"
+    },
+    "category": {
+      "model": "category"
+    },
+    "categoryTitle": {
+      "type": "string"
+    },
+    "createdBy": {
+      "model": "user"
+    },
+    "updatedBy": {
+      "model": "user"
+    },
+    "contributors": {
+      "collection": "user",
+      "via": "clues"
+    }
+  },
+  "autoCreatedAt": true,
+  "autoUpdatedAt": true
+}

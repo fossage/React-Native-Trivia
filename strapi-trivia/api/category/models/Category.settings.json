@@ -1,0 +1,42 @@
+{
+  "identity": "category",
+  "connection": "mymongo",
+  "displayedAttribute": "category",
+  "schema": true,
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "clues": {
+      "collection": "clue",
+      "via": "category"
+    },
+    "clues_count": {
+      "type": "integer"
+    },
+    "airdate": {
+      "type": "datetime"
+    },
+    "id": {
+      "type": "integer",
+      "unique": true,
+      "primaryKey": true
+    },
+    "createdBy": {
+      "model": "user"
+    },
+    "tags": {
+      "type": "array"
+    },
+    "updatedBy": {
+      "model": "user"
+    },
+    "contributors": {
+      "collection": "user",
+      "via": "categories"
+    }
+  },
+  "autoCreatedAt": true,
+  "autoUpdatedAt": true
+}

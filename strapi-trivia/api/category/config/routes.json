@@ -1,0 +1,57 @@
+{
+  "routes": {
+    "GET /category": {
+      "controller": "Category",
+      "action": "find",
+      "policies": [
+        
+      ]
+    },
+    "GET /category/:id": {
+      "controller": "Category",
+      "action": "findOne",
+      "policies": [
+        
+      ]
+    },
+    "POST /category": {
+      "controller": "Category",
+      "action": "create",
+      "policies": [
+        "isAuthorized",
+        "addDataCreate"
+      ]
+    },
+    "PUT /category/:id": {
+      "controller": "Category",
+      "action": "update",
+      "policies": [
+        "isAuthorized",
+        "addDataUpdate"
+      ]
+    },
+    "DELETE /category/:id": {
+      "controller": "Category",
+      "action": "destroy",
+      "policies": [
+        "isAuthorized"
+      ]
+    },
+    "POST /category/:parentId/:relation": {
+      "controller": "Category",
+      "action": "add",
+      "policies": [
+        "isAuthorized",
+        "addDataCreate"
+      ]
+    },
+    "DELETE /category/:parentId/:relation/:id": {
+      "controller": "Category",
+      "action": "remove",
+      "policies": [
+        "isAuthorized",
+        "addDataUpdate"
+      ]
+    }
+  }
+}
