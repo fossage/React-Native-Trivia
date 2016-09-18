@@ -51,7 +51,7 @@ class CategoriesIndex extends Component{
   }
 
   _handleCategoryPress(category){
-    Actions.cluesMenu(category);
+    Actions.currentClue(category);
   }
 }
 

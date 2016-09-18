@@ -16,7 +16,7 @@ import Api             from '../services/api-service';
 import MainMenu        from './main-menu';
 import DecadesMenu     from '../containers/decades-menu';
 import CategoriesIndex from '../containers/categories-index';
-import CluesMenu       from './clues-menu';
+import CurrentClue     from './current-clue';
 
 const {
   AppRegistry,
@@ -25,7 +25,6 @@ const {
   View,
   Navigator
 } = ReactNative;
-
 
 const enhancer = compose(
   applyMiddleware(ReduxPromise), 
@@ -43,13 +42,6 @@ export default class App extends Component {
     });
   }
 
-  // initialRoute is where we explicitly define the initial route upon loading.
-  // We can also define initalRouteStack which is a pre-populated stack of routes
-  // that will give us routes we can navigate back and forward in upon app load(I think).
-
-  // When we update the stack via either push or pop, it will call the fucntion assigned
-  // to renderScene again passing in the 'route' object. It is up to the function assigned
-  // to renderScene to take the data from that object and return the appropriate component
   render() {
     return (
       <Provider store={createStoreWithMiddleware(reducers, enhancer)} >
@@ -58,7 +50,7 @@ export default class App extends Component {
             <Scene key="mainMenu" component={MainMenu} title="Main Menu" />
             <Scene key="decadesMenu" component={DecadesMenu} title="Select Decade" />
             <Scene key="categoriesIndex" component={CategoriesIndex} title="Select Category" />
-            <Scene key="cluesMenu" component={CluesMenu} title="Clues" />
+            <Scene key="currentClue" component={CurrentClue} title="Clues" />
           </Scene>
         </ReduxRouter>
       </Provider>
