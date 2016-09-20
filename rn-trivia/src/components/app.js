@@ -16,7 +16,7 @@ import Api             from '../services/api-service';
 import MainMenu        from './main-menu';
 import DecadesMenu     from '../containers/decades-menu';
 import CategoriesIndex from '../containers/categories-index';
-import CurrentClue     from './current-clue';
+import CurrentClue     from '../containers/current-clue';
 
 const {
   AppRegistry,
