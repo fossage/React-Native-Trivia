@@ -1,18 +1,25 @@
 /*===================================
-          IMPORTS/ASSIGNMENT
+        IMPORTS/DECONSTRUCTION
  ===================================*/
 const ReactNative = require('react-native');
 
-import _                          from 'lodash';
-import { connect }                from 'react-redux';
-import React, {Component}         from 'react';
-import TimerMixin                 from 'react-timer-mixin';
-import inflection                 from 'lodash-inflection';
-import ReactMixin                 from 'react-mixin';
-import MainStyles                 from '../styles/main';
-import { Actions }                from 'react-native-router-flux';
-import ScoreCounter               from '../components/score-counter';
-import { updateCurrentGameScore } from '../actions/index';
+import _                            from 'lodash';
+import { connect }                  from 'react-redux';
+import React, {Component}           from 'react';
+import TimerMixin                   from 'react-timer-mixin';
+import inflection                   from 'lodash-inflection';
+import ReactMixin                   from 'react-mixin';
+import MainStyles                   from '../styles/main';
+import { Actions }                  from 'react-native-router-flux';
+import ScoreCounter                 from '../components/score-counter';
+import { updateCurrentGameScore }   from '../actions/index';
+import { AnimatedCircularProgress } from 'react-native-circular-progress';
+
+import {
+  blackList, 
+  alternateText,
+  cleanWord
+} from '../utils/string';
 
 import { 
   Button,
@@ -26,9 +33,9 @@ const {
   View,
   Text,
   TextInput,
-  StyleSheet
+  StyleSheet,
+  ProgressViewIOS
 } = ReactNative;
-
 
 /*===================================
            CLASS DEFINITION
@@ -39,8 +46,11 @@ class CurrentClue extends Component{
     _.mixin(inflection);
     
     this.state = { 
+      progress: 0,
+      userAnswer: '',
       difficultyIdx: 0,
-      userAnswer: ''
+      currentDifficulty: 0,
+      correctLastAnswer: false
     };
   }
 
@@ -53,18 +63,40 @@ class CurrentClue extends Component{
 
     // ensure we clear any existing score
     this.props.updateCurrentGameScore(-this.props.currentScore);
-
     this.setState({currentDifficulty: this.props.clues[0].value})
+  }
+
+  componentDidMount() {
+    this.refs.circularProgress.performLinearAnimation(100, 20000);
   }
   
   render() {
     return (
-      <View style={styles.scrollContainer}>
-        <Text style={styles.difficultyText}>{this.state.currentDifficulty}</Text>
-        <ScoreCounter score={this.props.currentScore}/>
-        { this._renderClue(this.props.clues) }
-        { this._renderAnswer() }
+      <View style={{paddingTop: 80}}>
+        <ProgressViewIOS style={styles.progressView} progress={this.state.progress}/>
+        <View style={styles.scrollContainer}>
+          <Text style={styles.difficultyText}>{this.state.currentDifficulty}</Text>
+          { this._renderProgress(this.props.currentScore)      }
+          { this._renderClue(this.props.clues) }
+          { this._renderAnswer() }
+        </View>
       </View>
+    );
+  }
+
+  _renderProgress(score) {
+    return (
+     <AnimatedCircularProgress
+        size={80}
+        width={3}
+        rotation={0}
+        tintColor="#00e0ff"
+        backgroundColor="#3d5875"
+        resetOnComplete={true}
+        onComplete={(e) => {console.log(e)}}
+        ref="circularProgress">
+        {() => <Text style={styles.pointText}>{score}</Text>}
+      </AnimatedCircularProgress>
     );
   }
 
@@ -96,11 +128,26 @@ class CurrentClue extends Component{
 
   _renderAnswer() {
      if(this.state.actualAnswer){
+      let icon      = 'mood-bad';
+      let bgc       = '#FFBABA';
+      let textColor = '#D8000C';
+
+      if(this.state.correctLastAnswer) {
+        icon      = 'mood';
+        bgc       = '#4F8A10';
+        textColor = '#ffffff';
+      }
+
       return (
         <View style={styles.answerContainer}>
-          <Text style={styles.answerText}>
-            {_.titleize(this.state.actualAnswer.replace(/[\\]/g, ''))}
-          </Text>
+          <Button 
+            small
+            raised
+            textStyle={{color: textColor}}
+            backgroundColor={bgc}
+            title={_.titleize(cleanWord(this.state.actualAnswer))}
+            icon={{name: icon, color: textColor}}
+          />
         </View>
       )
     }
@@ -110,32 +157,41 @@ class CurrentClue extends Component{
     let current      = this.props.clues[this.state.difficultyIdx];
     let actualAnswer = current.answer;
     let userAnswer   = this.state.userAnswer;
-    
+    let correct      = false;
+
     // break the words up into an array and lowercase them
     let actualAnswerKeywords = _createKeywords(actualAnswer);
     let userAnswerKeywords   = _createKeywords(userAnswer);
 
     if(_compareKeywords(actualAnswerKeywords, userAnswerKeywords)) {
       this.props.updateCurrentGameScore(current.value)
+      correct = true;
     } else {
       this.props.updateCurrentGameScore(-current.value);
     }
 
     let difficultyIdx = this.state.difficultyIdx + 1;
-    this.setState({ actualAnswer: current.answer });
+    
+    this.setState({ 
+      actualAnswer: current.answer,
+      correctLastAnswer: correct
+    });
 
     this.setTimeout(
       () => {
         if(difficultyIdx === this.props.clues.length) {
           Actions.categoriesIndex();
-        }
+        } else {
+           this.setState({
+            difficultyIdx: difficultyIdx,
+            currentDifficulty: this.props.clues[difficultyIdx].value,
+            progress: difficultyIdx / (this.props.clues.length - 1),
+            userAnswer: '',
+            actualAnswer: ''
+          });
 
-        this.setState({
-          difficultyIdx: difficultyIdx,
-          currentDifficulty: this.props.clues[difficultyIdx].value,
-          userAnswer: '',
-          actualAnswer: ''
-        });
+          this.refs.circularProgress.performLinearAnimation(100, 20000);
+        }
       }, 4000);
   }
 }
@@ -144,8 +200,21 @@ class CurrentClue extends Component{
                 STYLES
  ===================================*/
 const styles = StyleSheet.create({
+  container: {
+    paddingTop:80
+  },
+
+  pointText: {
+    position: 'absolute',
+    textAlign: 'center',
+    width: 80,
+    top: 30,
+    left: 0,
+    backgroundColor: 'transparent',
+    fontSize: 20
+  },
+
   scrollContainer: {
-    paddingTop: 100,
     justifyContent: 'flex-start',
     alignItems: 'center',
     flex: 1
@@ -159,14 +228,15 @@ const styles = StyleSheet.create({
     textAlign: 'center'
   },
 
+  progressView: {
+    marginLeft: 10,
+    marginRight: 10,
+    marginBottom: 30
+  },
+
   answerContainer: {
-    borderWidth: 1,
-    borderColor: '#cccccc',
-    borderRadius: 5,
     marginTop: 20,
-    padding: 10,
-    width: 300,
-    backgroundColor: '#008C3F'
+    width: 300
   },
 
   answerText: {
@@ -184,23 +254,15 @@ const styles = StyleSheet.create({
            PRIVATE FUNCTIONS
  ===================================*/
 function _createKeywords(str) {
-  const blackList = [
-    'the',
-    'or',
-    'and',
-    'of',
-    'a'
-  ];
-
   let whiteStrArr = str.toLowerCase().split(' ');
   let blackStrArr = [];
 
   whiteStrArr.forEach(word => {
-    let cleanedWord = word
-    .replace(/<[^>]*>/g, "")
-    .replace(/[\"\'\*\-\_\(\)\=\+\{\}\|\/\\\[\]\!\`\~\.\?\<\>\;\:\,\^]/g, "")
-    .trim();
-    if(!blackList.includes(cleanedWord)) blackStrArr.push(cleanedWord);
+    let cleanedWord = cleanWord(word);
+    
+    if(!blackList.includes(cleanedWord)) {
+      blackStrArr.push(cleanedWord);
+    }
   });
 
   return blackStrArr;
@@ -221,6 +283,9 @@ function _mapStateToProps(state){
   return {currentScore: state.user.currentGameScore}
 }
 
+/*===================================
+           MIXINS/CONNECTION
+ ===================================*/
 ReactMixin(CurrentClue.prototype, TimerMixin);
 
 export default connect(_mapStateToProps, { updateCurrentGameScore })(CurrentClue);
