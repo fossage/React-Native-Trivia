@@ -2,6 +2,7 @@
         IMPORTS/DECONSTRUCTION
  ===================================*/
 const ReactNative = require('react-native');
+var dismissKeyboard = require('dismissKeyboard');
 
 import _                            from 'lodash';
 import { connect }                  from 'react-redux';
@@ -178,6 +179,7 @@ class CurrentClue extends Component{
 
  /*=============== HANDLERS ==============*/
   _handleSubmit() {
+    dismissKeyboard();
     if(this.state.processingLastAnswer) return false;
     let current      = this.props.clues[this.state.difficultyIdx];
     let actualAnswer = current.answer;
