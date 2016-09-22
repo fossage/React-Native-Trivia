@@ -1,6 +1,7 @@
 const ReactNative = require('react-native');
 
 import _                    from 'lodash';
+import inflection           from 'lodash-inflection';
 import React, { Component } from 'react';
 import { connect }          from 'react-redux';
 import { Actions }          from 'react-native-router-flux';
@@ -22,6 +23,7 @@ import {
 class CategoriesIndex extends Component{
   constructor(props) {
     super(props);
+    _.mixin(inflection);
   }
 
   render() {
@@ -41,7 +43,7 @@ class CategoriesIndex extends Component{
     return this.props.categories.map(category => {
       return (
         <ListItem 
-          title={_.startCase(category.title)} 
+          title={_.titleize(category.title)} 
           key={category.id}
           onPress={this._handleCategoryPress.bind(this, category)} 
           titleStyle={styles.catogoryTitle}
@@ -51,7 +53,10 @@ class CategoriesIndex extends Component{
   }
 
   _handleCategoryPress(category){
-    Actions.currentClue(category);
+    Actions.currentClue({
+      ...category,
+      title: _.titleize(category.title)
+    });
   }
 }
 

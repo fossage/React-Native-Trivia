@@ -20,7 +20,8 @@ let altText = {
   'xi': '11',
   'xii': '12',
   'xiii': '13',
-  '&': 'and'
+  '&': 'and',
+  'ben': 'benjamin'
 };
 
 export const alternateText = Object.assign(altText, _.invert(altText));
@@ -34,4 +35,29 @@ export function cleanWord(word){
     .replace(/[\"\'\*\-\_\(\)\=\+\{\}\|\/\\\[\]\!\`\~\.\?\<\>\;\:\,\^]/g, "")
     .trim()
     .value();
+}
+
+export function compareKeywords(kws1, kws2) {
+  for(let i=0; i<kws1.length; i++) {
+    if(!kws2[i] || (kws2[i] !== kws1[i])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+export function createKeywords(str, blackList) {
+  let whiteStrArr = str.toLowerCase().split(' ');
+  let blackStrArr = [];
+
+  whiteStrArr.forEach(word => {
+    let cleanedWord = cleanWord(word);
+    
+    if((blackList && !blackList.includes(cleanedWord)) || !blackList) {
+      blackStrArr.push(cleanedWord);
+    }
+  });
+
+  return blackStrArr;
 }

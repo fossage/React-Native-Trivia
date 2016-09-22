@@ -9,16 +9,18 @@ import React, {Component}           from 'react';
 import TimerMixin                   from 'react-timer-mixin';
 import inflection                   from 'lodash-inflection';
 import ReactMixin                   from 'react-mixin';
-import MainStyles                   from '../styles/main';
+import styles                       from '../styles/styles-current-clue';
 import { Actions }                  from 'react-native-router-flux';
 import ScoreCounter                 from '../components/score-counter';
 import { updateCurrentGameScore }   from '../actions/index';
 import { AnimatedCircularProgress } from 'react-native-circular-progress';
 
 import {
+  cleanWord,
   blackList, 
   alternateText,
-  cleanWord
+  createKeywords,
+  compareKeywords,
 } from '../utils/string';
 
 import { 
@@ -32,9 +34,9 @@ import {
 const {
   View,
   Text,
-  TextInput,
-  StyleSheet,
-  ProgressViewIOS
+  Animated,
+  Dimensions,
+  Easing
 } = ReactNative;
 
 /*===================================
@@ -43,23 +45,29 @@ const {
 class CurrentClue extends Component{
   constructor(props) {
     super(props);
-    _.mixin(inflection);
-    
+
     this.state = { 
-      progress: 0,
       userAnswer: '',
       difficultyIdx: 0,
       currentDifficulty: 0,
-      correctLastAnswer: false
+      correctLastAnswer: false,
+      timerProgress: new Animated.Value(0)
     };
+
+    this.data = {
+      progress: new Animated.Value(0),
+      easing: Easing.inOut(Easing.ease),
+      easingDuration: 500,
+      width: Dimensions.get('window').width
+    };
+
+    _.mixin(inflection);
   }
 
   componentWillMount() {
     // sort clues by easiest first
     const sortedClues = this.props.clues.sort((a, b) => a.value - b.value);
-    this.props.clues = _.remove(sortedClues, clue => {
-      return clue.value === null || clue.value === undefined;
-    });
+    this.props.clues = _.remove(sortedClues, clue => !clue.value);
 
     // ensure we clear any existing score
     this.props.updateCurrentGameScore(-this.props.currentScore);
@@ -67,23 +75,35 @@ class CurrentClue extends Component{
   }
 
   componentDidMount() {
-    this.refs.circularProgress.performLinearAnimation(100, 20000);
+    this._startTimer();
   }
   
   render() {
+    const fillWidth = this.data.progress.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, this.data.width - 20],
+    });
+
     return (
-      <View style={{paddingTop: 80}}>
-        <ProgressViewIOS style={styles.progressView} progress={this.state.progress}/>
-        <View style={styles.scrollContainer}>
-          <Text style={styles.difficultyText}>{this.state.currentDifficulty}</Text>
-          { this._renderProgress(this.props.currentScore)      }
-          { this._renderClue(this.props.clues) }
-          { this._renderAnswer() }
+      <View style={{paddingTop: 65}}>
+        <View style={styles.progressContainer}>
+          <Animated.View style={[styles.progressBar, {width: fillWidth}]}/>
+        </View>
+
+        <View style={styles.clueStateContainer}>
+          <Text style={styles.difficultyText}>
+            {this.state.currentDifficulty}
+          </Text>
+          
+          { this._renderProgress(this.props.currentScore) }
+          { this._renderClue(this.props.clues)            }
+          { this._renderAnswer()                          }
         </View>
       </View>
     );
   }
 
+  /*============== RENDER HELPERS =============*/
   _renderProgress(score) {
     return (
      <AnimatedCircularProgress
@@ -92,10 +112,8 @@ class CurrentClue extends Component{
         rotation={0}
         tintColor="#00e0ff"
         backgroundColor="#3d5875"
-        resetOnComplete={true}
-        onComplete={(e) => {console.log(e)}}
-        ref="circularProgress">
-        {() => <Text style={styles.pointText}>{score}</Text>}
+        fill={this.state.timerProgress}>
+        { () => <Text style={styles.pointText}>{score}</Text> }
       </AnimatedCircularProgress>
     );
   }
@@ -127,7 +145,7 @@ class CurrentClue extends Component{
   }
 
   _renderAnswer() {
-     if(this.state.actualAnswer){
+     if(this.state.actualAnswer) {
       let icon      = 'mood-bad';
       let bgc       = '#FFBABA';
       let textColor = '#D8000C';
@@ -153,132 +171,86 @@ class CurrentClue extends Component{
     }
   }
 
+ /*=============== HANDLERS ==============*/
   _handleSubmit() {
     let current      = this.props.clues[this.state.difficultyIdx];
     let actualAnswer = current.answer;
     let userAnswer   = this.state.userAnswer;
-    let correct      = false;
 
     // break the words up into an array and lowercase them
-    let actualAnswerKeywords = _createKeywords(actualAnswer);
-    let userAnswerKeywords   = _createKeywords(userAnswer);
-
-    if(_compareKeywords(actualAnswerKeywords, userAnswerKeywords)) {
-      this.props.updateCurrentGameScore(current.value)
-      correct = true;
-    } else {
-      this.props.updateCurrentGameScore(-current.value);
-    }
-
-    let difficultyIdx = this.state.difficultyIdx + 1;
+    let actualAnswerKeys   = createKeywords(actualAnswer, blackList);
+    let userAnswerKeys     = createKeywords(userAnswer, blackList);
+    let correctLastAnswer  = compareKeywords(actualAnswerKeys, userAnswerKeys)
+    let currentRoundPoints = correctLastAnswer ? current.value : -current.value;
     
+    this.props.updateCurrentGameScore(currentRoundPoints)
+    this.state.timerProgress.setValue(0);
+
     this.setState({ 
-      actualAnswer: current.answer,
-      correctLastAnswer: correct
+      actualAnswer,
+      correctLastAnswer
     });
 
-    this.setTimeout(
-      () => {
-        if(difficultyIdx === this.props.clues.length) {
-          Actions.categoriesIndex();
-        } else {
-           this.setState({
-            difficultyIdx: difficultyIdx,
-            currentDifficulty: this.props.clues[difficultyIdx].value,
-            progress: difficultyIdx / (this.props.clues.length - 1),
-            userAnswer: '',
-            actualAnswer: ''
-          });
+    this.setTimeout(() => {
+      let difficultyIdx = this.state.difficultyIdx + 1;
 
-          this.refs.circularProgress.performLinearAnimation(100, 20000);
-        }
-      }, 4000);
+      (difficultyIdx === this.props.clues.length) 
+        ? Actions.categoriesIndex()
+        : this._updateAndGoToNextClue(difficultyIdx);
+    }, 4000);
+  }
+
+  _startTimer() {
+    Animated.timing(this.state.timerProgress, {
+      toValue: 100,
+      duration: 20000
+    })
+    .start(e => {
+      if(e.finished) {
+        let timerProgress = new Animated.Value(0);
+        this.setState({ timerProgress });
+        this._handleSubmit();
+      }
+    });        
+  }
+
+  _updateProgressBar() {
+    Animated.timing(this.data.progress, {
+      easing: this.data.easing,
+      duration: this.data.easingDuration,
+      toValue: this.data.progress
+    }).start();
+  }
+
+  _updateAndGoToNextClue(difficultyIdx) {
+    let {easing}          = this.data;
+    let duration          = this.data.easingDuration;
+    let toValue           = difficultyIdx / (this.props.clues.length - 1)
+    let userAnswer        = '';
+    let actualAnswer      = '';
+    let currentDifficulty = this.props.clues[difficultyIdx].value;
+    
+    Animated
+    .timing(this.data.progress, {
+      easing,
+      duration,
+      toValue
+    }).start();
+
+    this.setState({
+      userAnswer,
+      actualAnswer,
+      difficultyIdx,
+      currentDifficulty
+    });
+
+    this._startTimer();
   }
 }
-
-/*===================================
-                STYLES
- ===================================*/
-const styles = StyleSheet.create({
-  container: {
-    paddingTop:80
-  },
-
-  pointText: {
-    position: 'absolute',
-    textAlign: 'center',
-    width: 80,
-    top: 30,
-    left: 0,
-    backgroundColor: 'transparent',
-    fontSize: 20
-  },
-
-  scrollContainer: {
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    flex: 1
-  },
-
-  buttonText: {
-    flexDirection: 'column'
-  },
-
-  difficultyText: {
-    textAlign: 'center'
-  },
-
-  progressView: {
-    marginLeft: 10,
-    marginRight: 10,
-    marginBottom: 30
-  },
-
-  answerContainer: {
-    marginTop: 20,
-    width: 300
-  },
-
-  answerText: {
-    textAlign: 'center',
-    color: '#ffffff',
-    fontSize: 18
-  },
-
-  textInput: {
-    flex: 1,
-  }
-});
 
 /*===================================
            PRIVATE FUNCTIONS
  ===================================*/
-function _createKeywords(str) {
-  let whiteStrArr = str.toLowerCase().split(' ');
-  let blackStrArr = [];
-
-  whiteStrArr.forEach(word => {
-    let cleanedWord = cleanWord(word);
-    
-    if(!blackList.includes(cleanedWord)) {
-      blackStrArr.push(cleanedWord);
-    }
-  });
-
-  return blackStrArr;
-}
-
-function _compareKeywords(actualAnswerKeys, userAnswerKeys) {
-  console.log(actualAnswerKeys, userAnswerKeys)
-  for(let i=0; i<actualAnswerKeys.length; i++) {
-    if(!userAnswerKeys[i] || (userAnswerKeys[i] !== actualAnswerKeys[i])) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
 function _mapStateToProps(state){
   return {currentScore: state.user.currentGameScore}
 }
