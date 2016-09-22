@@ -51,7 +51,8 @@ class CurrentClue extends Component{
       difficultyIdx: 0,
       currentDifficulty: 0,
       correctLastAnswer: false,
-      timerProgress: new Animated.Value(0)
+      timerProgress: new Animated.Value(0),
+      processingLastAnswer: false
     };
 
     this.data = {
@@ -137,7 +138,11 @@ class CurrentClue extends Component{
             returnTypeKey="go"
             value={this.state.userAnswer}
             onSubmitEditing={this._handleSubmit.bind(this)}
-            onChangeText={userAnswer => this.setState({userAnswer})} 
+            blurOnSubmit={true}
+            onChangeText={ userAnswer => {
+              if(this.state.processingLastAnswer) return false;
+              this.setState({userAnswer})
+            }} 
           />
         </View>
       </View>
@@ -173,26 +178,30 @@ class CurrentClue extends Component{
 
  /*=============== HANDLERS ==============*/
   _handleSubmit() {
+    if(this.state.processingLastAnswer) return false;
     let current      = this.props.clues[this.state.difficultyIdx];
     let actualAnswer = current.answer;
     let userAnswer   = this.state.userAnswer;
 
     // break the words up into an array and lowercase them
-    let actualAnswerKeys   = createKeywords(actualAnswer, blackList);
-    let userAnswerKeys     = createKeywords(userAnswer, blackList);
-    let correctLastAnswer  = compareKeywords(actualAnswerKeys, userAnswerKeys)
-    let currentRoundPoints = correctLastAnswer ? current.value : -current.value;
+    let actualAnswerKeys     = createKeywords(actualAnswer, blackList);
+    let userAnswerKeys       = createKeywords(userAnswer, blackList);
+    let correctLastAnswer    = compareKeywords(actualAnswerKeys, userAnswerKeys)
+    let currentRoundPoints   = correctLastAnswer ? current.value : -current.value;
+    let processingLastAnswer = true;
     
     this.props.updateCurrentGameScore(currentRoundPoints)
     this.state.timerProgress.setValue(0);
 
     this.setState({ 
       actualAnswer,
-      correctLastAnswer
+      correctLastAnswer,
+      processingLastAnswer
     });
 
     this.setTimeout(() => {
       let difficultyIdx = this.state.difficultyIdx + 1;
+      this.setState({processingLastAnswer: false});
 
       (difficultyIdx === this.props.clues.length) 
         ? Actions.categoriesIndex()

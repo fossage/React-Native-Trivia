@@ -71,10 +71,6 @@ const styles = StyleSheet.create( {
     padding: 5
   },
 
-  // scrollView: {
-  //   flex: 1
-  // },
-
   buttonContainer: {
     flex: 1,
     justifyContent: 'center'

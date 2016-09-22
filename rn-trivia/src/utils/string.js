@@ -21,8 +21,16 @@ let altText = {
   'xii': '12',
   'xiii': '13',
   '&': 'and',
-  'ben': 'benjamin'
+  'ben': 'benjamin',
+  'ad': 'anno domini',
+  'sunscreen': 'suntan lotion',
+  'vw beetle': 'beetle'
 };
+
+let potentialMultiWordAbbreviations = [
+  'anno domini',
+  'suntan lotion'
+];
 
 export const alternateText = Object.assign(altText, _.invert(altText));
 

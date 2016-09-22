@@ -45,8 +45,8 @@ export default class App extends Component {
   render() {
     return (
       <Provider store={createStoreWithMiddleware(reducers, enhancer)} >
-        <ReduxRouter navigationBarStyle={styles.container}>
-          <Scene sceneStyle={styles.container} key="root">
+        <ReduxRouter >
+          <Scene key="root">
             <Scene key="mainMenu" component={MainMenu} title="Main Menu" />
             <Scene key="decadesMenu" component={DecadesMenu} title="Select Decade" />
             <Scene key="categoriesIndex" component={CategoriesIndex} title="Select Category" />
@@ -57,9 +57,3 @@ export default class App extends Component {
     );
   }
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  }
-});
