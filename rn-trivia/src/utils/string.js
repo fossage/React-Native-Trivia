@@ -24,7 +24,17 @@ let altText = {
   'ben': 'benjamin',
   'ad': 'anno domini',
   'sunscreen': 'suntan lotion',
-  'vw beetle': 'beetle'
+  'vw beetle': 'beetle',
+  'one': '1',
+  'two': '2',
+  'three': '3',
+  'four': '4',
+  'five': '5',
+  'six': '6',
+  'seven': '7',
+  'eight': '8',
+  'nine': '9',
+  'ten': '10'
 };
 
 let potentialMultiWordAbbreviations = [
@@ -43,6 +53,29 @@ export function cleanWord(word){
     .replace(/[\"\'\*\-\_\(\)\=\+\{\}\|\/\\\[\]\!\`\~\.\?\<\>\;\:\,\^]/g, "")
     .trim()
     .value();
+}
+
+export function reverseAndOrder(str) {
+  // break string at 'and' and reverse the words around it
+  let output = str;
+  lowStr = str.toLowerCase();
+  let strArr = lowStr.split('and');
+
+  if(strArr.length > 1) {
+    let andIdx = strArr.find((word, idx) => {
+      if(word === 'and') return idx;
+    });
+
+    let preAnd  = strArr[andIdx - 1];
+    let postAnd = strArr[andIdx + 1];
+    let output  = strArr.slice(0, andIdx - 1)
+    .concat(preAnd)
+    .concat('and')
+    .concat(postAnd)
+    .join('');
+  }
+  
+  return output;
 }
 
 export function compareKeywords(kws1, kws2) {

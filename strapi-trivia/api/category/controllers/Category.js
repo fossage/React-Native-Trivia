@@ -4,6 +4,7 @@ const model = 'category';
 // const Category = require('../models/Category');
 const request = require('request');
 const apiRoot = 'http://jservice.io/api';
+const graphql = require('graphql').graphql();
 
 /**
  * A set of functions called "actions" for `category`

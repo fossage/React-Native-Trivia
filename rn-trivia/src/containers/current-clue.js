@@ -186,12 +186,20 @@ class CurrentClue extends Component{
     let userAnswer   = this.state.userAnswer;
 
     // break the words up into an array and lowercase them
-    let actualAnswerKeys     = createKeywords(actualAnswer, blackList);
-    let userAnswerKeys       = createKeywords(userAnswer, blackList);
-    let correctLastAnswer    = compareKeywords(actualAnswerKeys, userAnswerKeys)
-    let currentRoundPoints   = correctLastAnswer ? current.value : -current.value;
     let processingLastAnswer = true;
+    let currentRoundPoints;
+    let correctLastAnswer; 
     
+    if(userAnswer === '') {
+      currentRoundPoints = 0;
+      correctLastAnswer  = false;
+    } else {
+      let actualAnswerKeys = createKeywords(actualAnswer, blackList);
+      let userAnswerKeys   = createKeywords(userAnswer, blackList);
+      correctLastAnswer    = compareKeywords(actualAnswerKeys, userAnswerKeys)
+      currentRoundPoints   = correctLastAnswer ? current.value : -current.value;
+    }
+
     this.props.updateCurrentGameScore(currentRoundPoints)
     this.state.timerProgress.setValue(0);
 
