@@ -5,6 +5,7 @@ const model = 'category';
 const request = require('request');
 const apiRoot = 'http://jservice.io/api';
 const graphql = require('graphql').graphql();
+const querystring = require('querystring');
 
 /**
  * A set of functions called "actions" for `category`
@@ -19,10 +20,24 @@ module.exports = {
    */
 
   find: function * () {
-    this.model = model;
     try {
-      let entries = yield strapi.hooks.blueprints.find(this);
-      this.body = entries;;
+      let queryParams = querystring.parse(this.originalUrl.split('?')[1]);
+      let query       = JSON.parse(queryParams.where);
+      let defer       = Promise.defer();
+
+      if(!query.skip) query.skip = Math.floor(Math.random() * 600);
+      if(!query.limit) query.limit = 20;
+
+      Category
+      .find(query)
+      .populate('clues')
+      .exec((err, data) => {
+        if(err) defer.reject(err);
+        console.log(data)
+        defer.resolve(data);
+      });
+
+      this.body = yield defer.promise;
     } catch (err) {
       this.body = err;
     }
@@ -36,6 +51,7 @@ module.exports = {
 
   findOne: function * () {
     this.model = model;
+    
     try {
       let entry = yield strapi.hooks.blueprints.findOne(this);
       this.body = entry;

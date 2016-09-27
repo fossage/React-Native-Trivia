@@ -10,9 +10,9 @@
 process.chdir(__dirname);
 
 (function () {
-  const logger = require('koa-logger')
+  // const logger = require('koa-logger')
   const strapi = require('strapi');
 
-  strapi.app.use(logger());
+  // strapi.app.use(logger());
   strapi.start();
 })();
