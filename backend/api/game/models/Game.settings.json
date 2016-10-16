@@ -1,0 +1,25 @@
+{
+  "identity": "game",
+  "connection": "",
+  "displayedAttribute": "",
+  "schema": true,
+  "attributes": {
+
+    "createdBy": {
+      "model": "user"
+    },
+    "updatedBy": {
+      "model": "user"
+    },
+    "players": {
+      "collection": "user",
+      "via": "gameHistory"
+    },
+    "contributors": {
+      "collection": "user",
+      "via": "games"
+    }
+  },
+  "autoCreatedAt": true,
+  "autoUpdatedAt": true
+}
